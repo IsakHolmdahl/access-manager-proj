@@ -68,3 +68,33 @@ Desktop.ini
 *.bak
 *.swp
 *~
+
+# Node.js / JavaScript / TypeScript (Frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Next.js
+.next/
+out/
+.vercel
+.turbo
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Environment variables (already covered but adding specifics)
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
