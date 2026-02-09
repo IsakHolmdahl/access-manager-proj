@@ -78,26 +78,26 @@
 
 ### Authentication Implementation for US1
 
-- [ ] T025 [P] [US1] Create Zod schema for login form validation in frontend/src/lib/validations/auth.ts
-- [ ] T026 [P] [US1] Create POST /api/auth/login route with user authentication and cookie setting in frontend/src/app/api/auth/login/route.ts
-- [ ] T027 [P] [US1] Create POST /api/auth/logout route for session termination in frontend/src/app/api/auth/logout/route.ts
-- [ ] T028 [P] [US1] Create GET /api/auth/session route for session validation in frontend/src/app/api/auth/session/route.ts
+- [X] T025 [P] [US1] Create Zod schema for login form validation in frontend/src/lib/validations/auth.ts
+- [X] T026 [P] [US1] Create POST /api/auth/login route with user authentication and cookie setting in frontend/src/app/api/auth/login/route.ts
+- [X] T027 [P] [US1] Create POST /api/auth/logout route for session termination in frontend/src/app/api/auth/logout/route.ts
+- [X] T028 [P] [US1] Create GET /api/auth/session route for session validation in frontend/src/app/api/auth/session/route.ts
 
 ### UI Components for US1
 
-- [ ] T029 [P] [US1] Create login page component with form and error handling in frontend/src/app/login/page.tsx
-- [ ] T030 [P] [US1] Create LoginForm component using React Hook Form and shadcn/ui in frontend/src/components/auth/LoginForm.tsx
-- [ ] T031 [P] [US1] Create LoadingSpinner component in frontend/src/components/ui/LoadingSpinner.tsx
-- [ ] T032 [P] [US1] Create ErrorMessage component in frontend/src/components/ui/ErrorMessage.tsx
+- [X] T029 [P] [US1] Create login page component with form and error handling in frontend/src/app/login/page.tsx
+- [X] T030 [P] [US1] Create LoginForm component using React Hook Form and shadcn/ui in frontend/src/components/auth/LoginForm.tsx
+- [X] T031 [P] [US1] Create LoadingSpinner component in frontend/src/components/ui/LoadingSpinner.tsx
+- [X] T032 [P] [US1] Create ErrorMessage component in frontend/src/components/ui/ErrorMessage.tsx
 
 ### User Dashboard Implementation for US1
 
-- [ ] T033 [US1] Create GET /api/accesses/user route to fetch user's accesses in frontend/src/app/api/accesses/user/route.ts (depends on T026)
-- [ ] T034 [P] [US1] Create main user dashboard page in frontend/src/app/page.tsx
-- [ ] T035 [P] [US1] Create AccessList component for displaying access cards in frontend/src/components/user/AccessList.tsx
-- [ ] T036 [P] [US1] Create AccessCard component with access details in frontend/src/components/user/AccessCard.tsx
-- [ ] T037 [P] [US1] Create EmptyState component for no accesses in frontend/src/components/ui/EmptyState.tsx
-- [ ] T038 [US1] Integrate AuthContext with login/dashboard flow and add logout functionality (depends on T034)
+- [X] T033 [US1] Create GET /api/accesses/user route to fetch user's accesses in frontend/src/app/api/accesses/user/route.ts (depends on T026)
+- [X] T034 [P] [US1] Create main user dashboard page in frontend/src/app/page.tsx
+- [X] T035 [P] [US1] Create AccessList component for displaying access cards in frontend/src/components/user/AccessList.tsx
+- [X] T036 [P] [US1] Create AccessCard component with access details in frontend/src/components/user/AccessCard.tsx
+- [X] T037 [P] [US1] Create EmptyState component for no accesses in frontend/src/components/ui/EmptyState.tsx
+- [X] T038 [US1] Integrate AuthContext with login/dashboard flow and add logout functionality (depends on T034)
 
 **Checkpoint**: User Story 1 complete - Users can log in and view their accesses
 
