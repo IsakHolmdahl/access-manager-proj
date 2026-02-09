@@ -1,0 +1,908 @@
+openapi: 3.0.3
+info:
+  title: Access Management API
+  description: |
+    REST API for managing individual user accesses in a hypothetical system. 
+    
+    This POC system provides:
+    - User management (admin-only)
+    - Access catalog management (admin-only)
+    - User access assignment and revocation
+    - Custom SELECT queries on access data
+    
+    **Authentication:**
+    - Admin endpoints require `X-Admin-Key` header with secret key
+    - User endpoints require `X-Username` header (POC: no password verification)
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: http://localhost:8000/api/v1
+    description: Local development with version prefix
+
+tags:
+  - name: users
+    description: User management endpoints (admin-only)
+  - name: accesses
+    description: Access catalog management (admin-only)
+  - name: user-accesses
+    description: User access assignment and viewing
+  - name: query
+    description: Custom query execution
+
+paths:
+  # ==========================================================================
+  # User Management Endpoints (Admin)
+  # ==========================================================================
+  
+  /admin/users:
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Create a new user account. Requires admin authentication.
+      operationId: createUser
+      security:
+        - AdminKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  message: "User with username 'john_doe' already exists"
+                  type: "ConflictException"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    get:
+      tags:
+        - users
+      summary: List all users
+      description: Retrieve a list of all users. Requires admin authentication.
+      operationId: listUsers
+      security:
+        - AdminKey: []
+      parameters:
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Number of users to skip (pagination)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+          description: Maximum number of users to return
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+                  total:
+                    type: integer
+                  skip:
+                    type: integer
+                  limit:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  
+  /admin/users/{user_id}:
+    get:
+      tags:
+        - users
+      summary: Get user by ID
+      description: Retrieve a specific user by their ID. Requires admin authentication.
+      operationId: getUser
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    patch:
+      tags:
+        - users
+      summary: Update user
+      description: Update user information. Requires admin authentication.
+      operationId: updateUser
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: Delete a user account and all their access assignments. Requires admin authentication.
+      operationId: deleteUser
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  # ==========================================================================
+  # Access Catalog Management Endpoints (Admin)
+  # ==========================================================================
+  
+  /admin/accesses:
+    post:
+      tags:
+        - accesses
+      summary: Create a new access
+      description: Add a new access type to the catalog. Requires admin authentication.
+      operationId: createAccess
+      security:
+        - AdminKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessCreate'
+      responses:
+        '201':
+          description: Access created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Access name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    get:
+      tags:
+        - accesses
+      summary: List all accesses
+      description: Retrieve the complete access catalog. Public endpoint.
+      operationId: listAccesses
+      parameters:
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: List of available accesses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accesses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccessResponse'
+                  total:
+                    type: integer
+                  skip:
+                    type: integer
+                  limit:
+                    type: integer
+  
+  /admin/accesses/{access_id}:
+    get:
+      tags:
+        - accesses
+      summary: Get access by ID
+      description: Retrieve a specific access type. Public endpoint.
+      operationId: getAccess
+      parameters:
+        - $ref: '#/components/parameters/AccessId'
+      responses:
+        '200':
+          description: Access details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    patch:
+      tags:
+        - accesses
+      summary: Update access
+      description: Update access information. Requires admin authentication.
+      operationId: updateAccess
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/AccessId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessUpdate'
+      responses:
+        '200':
+          description: Access updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Access name already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - accesses
+      summary: Delete access
+      description: Delete an access type and remove it from all users. Requires admin authentication.
+      operationId: deleteAccess
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/AccessId'
+      responses:
+        '204':
+          description: Access deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  # ==========================================================================
+  # User Access Assignment Endpoints
+  # ==========================================================================
+  
+  /users/{user_id}/accesses:
+    get:
+      tags:
+        - user-accesses
+      summary: Get user's accesses
+      description: Retrieve all accesses assigned to a specific user.
+      operationId: getUserAccesses
+      security:
+        - UsernameAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: List of user's accesses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    post:
+      tags:
+        - user-accesses
+      summary: Request access for self
+      description: |
+        User requests an access for themselves. The request is automatically approved.
+        Users can only request accesses for their own account (authenticated user).
+        Requires X-Username header matching the user_id in the path.
+      operationId: requestAccess
+      security:
+        - UsernameAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRequestByName'
+      responses:
+        '201':
+          description: Access granted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: User or access not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already has this access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  
+  /users/{user_id}/accesses/{access_id}:
+    delete:
+      tags:
+        - user-accesses
+      summary: Remove access from user
+      description: |
+        Remove a specific access from a user. Users can remove their own accesses.
+        Admins can remove accesses from any user.
+        Requires X-Username header (users) or X-Admin-Key (admins).
+      operationId: revokeAccess
+      security:
+        - UsernameAuth: []
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/AccessId'
+      responses:
+        '204':
+          description: Access removed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User, access, or assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /admin/users/{user_id}/accesses:
+    post:
+      tags:
+        - user-accesses
+      summary: Assign access to user (admin)
+      description: |
+        Admin endpoint to assign an access to any user.
+        Requires admin authentication.
+      operationId: assignAccessToUser
+      security:
+        - AdminKey: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - access_id
+              properties:
+                access_id:
+                  type: integer
+                  minimum: 1
+              example:
+                access_id: 5
+      responses:
+        '201':
+          description: Access assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User or access not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already has this access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  # ==========================================================================
+  # Custom Query Endpoint
+  # ==========================================================================
+  
+  /query:
+    post:
+      tags:
+        - query
+      summary: Execute custom SELECT query
+      description: |
+        Execute a custom SELECT query on the access management tables.
+        
+        **Security:**
+        - Only SELECT statements are allowed
+        - UPDATE, DELETE, DROP, INSERT, etc. are blocked
+        - Queries are validated before execution
+        - Results are limited to 10,000 rows
+        - Timeout: 30 seconds
+        
+        **Available Tables:**
+        - `users` (id, username, created_at)
+        - `accesses` (id, name, description, renewal_period, created_at)
+        - `user_accesses` (user_id, access_id, assigned_at)
+      operationId: executeCustomQuery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomQueryRequest'
+      responses:
+        '200':
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomQueryResponse'
+        '400':
+          description: Invalid query or blocked operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                blockedOperation:
+                  value:
+                    error:
+                      message: "Operation not allowed: UPDATE"
+                      type: "QueryValidationError"
+                syntaxError:
+                  value:
+                    error:
+                      message: "Invalid SQL syntax: unexpected token"
+                      type: "QueryValidationError"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+# ==============================================================================
+# Components: Schemas, Parameters, Responses, Security Schemes
+# ==============================================================================
+
+components:
+  schemas:
+    # User Schemas
+    UserCreate:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Alphanumeric username with underscore and hyphen
+          example: john_doe
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          format: password
+          description: User password (will be hashed)
+          example: SecurePass123!
+    
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_-]+$'
+          nullable: true
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          format: password
+          nullable: true
+    
+    UserResponse:
+      type: object
+      required:
+        - id
+        - username
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: john_doe
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-02-05T10:30:00Z'
+    
+    # Access Schemas
+    AccessCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z_]+$'
+          description: Uppercase access identifier with underscores
+          example: READ_DOCUMENTS
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          example: Allows reading company documents
+        renewal_period:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Days until renewal required (null = non-expiring)
+          example: 90
+    
+    AccessUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z_]+$'
+          nullable: true
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+        renewal_period:
+          type: integer
+          minimum: 1
+          nullable: true
+    
+    AccessResponse:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 5
+        name:
+          type: string
+          example: READ_DOCUMENTS
+        description:
+          type: string
+          nullable: true
+          example: Allows reading company documents
+        renewal_period:
+          type: integer
+          nullable: true
+          example: 90
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-01-15T10:00:00Z'
+    
+    # User-Access Assignment Schemas
+    AccessRequestByName:
+      type: object
+      required:
+        - access_name
+      properties:
+        access_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: READ_DOCUMENTS
+    
+    UserAccessResponse:
+      type: object
+      required:
+        - user_id
+        - access_id
+        - access_name
+        - assigned_at
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        access_id:
+          type: integer
+          example: 5
+        access_name:
+          type: string
+          example: READ_DOCUMENTS
+        assigned_at:
+          type: string
+          format: date-time
+          example: '2026-02-05T14:30:00Z'
+    
+    AccessListResponse:
+      type: object
+      required:
+        - user_id
+        - username
+        - accesses
+        - total_count
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: john_doe
+        accesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessResponse'
+        total_count:
+          type: integer
+          example: 3
+    
+    # Custom Query Schemas
+    CustomQueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: SELECT query to execute
+          example: SELECT name, COUNT(*) as user_count FROM accesses JOIN user_accesses ON accesses.id = user_accesses.access_id GROUP BY name
+    
+    CustomQueryResponse:
+      type: object
+      required:
+        - columns
+        - rows
+        - row_count
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          example: ["name", "user_count"]
+        rows:
+          type: array
+          items:
+            type: array
+            items: {}
+          example: [["READ_DOCUMENTS", 5], ["ADMIN_PANEL", 2]]
+        row_count:
+          type: integer
+          example: 2
+    
+    # Error Schemas
+    ErrorDetail:
+      type: object
+      required:
+        - message
+        - type
+      properties:
+        message:
+          type: string
+          example: "User with id '123' not found"
+        type:
+          type: string
+          example: NotFoundException
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          example:
+            resource: User
+            identifier: "123"
+    
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+  
+  parameters:
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: User ID
+      example: 1
+    
+    AccessId:
+      name: access_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Access ID
+      example: 5
+  
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "Invalid request parameters"
+              type: "BadRequestException"
+    
+    Unauthorized:
+      description: Unauthorized - invalid or missing admin key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "Invalid admin API key"
+              type: "UnauthorizedException"
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: APIKey
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "User with id '123' not found"
+              type: "NotFoundException"
+              details:
+                resource: "User"
+                identifier: "123"
+    
+    ValidationError:
+      description: Validation error - invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "Validation failed"
+              type: "ValidationError"
+              details:
+                errors:
+                  - field: "username"
+                    message: "String should have at least 3 characters"
+                    type: "string_too_short"
+  
+  securitySchemes:
+    AdminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+      description: Admin secret key for protected endpoints
+    
+    UsernameAuth:
+      type: apiKey
+      in: header
+      name: X-Username
+      description: Username for user authentication (POC - no password verification)
