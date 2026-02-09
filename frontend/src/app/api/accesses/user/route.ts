@@ -45,14 +45,15 @@ export async function GET() {
       );
     }
 
-    const userId = session.user.username;
+    const userId = session.user.id; // Use numeric ID from session
+    const username = session.user.username;
 
-    // Fetch accesses from backend
+    // Fetch accesses from backend using numeric user ID
     const backendResponse = await fetch(
       `${BACKEND_URL}/users/${userId}/accesses`,
       {
         headers: {
-          'X-Username': userId,
+          'X-Username': username, // Backend still expects username in header for validation
         },
       }
     );
@@ -74,10 +75,10 @@ export async function GET() {
 
     // Transform backend response to frontend format
     const accesses: Access[] = (backendData.accesses || []).map((item: any) => ({
-      id: item.access_id,
-      name: item.access_name,
-      description: item.description,
-      created_at: item.granted_at || new Date().toISOString(),
+      id: item.id?.toString() || '',
+      name: item.name || '',
+      description: item.description || '',
+      created_at: item.created_at || new Date().toISOString(),
     }));
 
     return NextResponse.json({
