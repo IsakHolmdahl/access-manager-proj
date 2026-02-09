@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Access Management Web Frontend
 
-## Getting Started
+Next.js 14 web application for managing user access permissions with an admin dashboard.
 
-First, run the development server:
+## Features
 
-```bash
+### User Features
+- **Authentication**: Login with username
+- **View Accesses**: See all assigned access permissions
+- **Chat Placeholder**: Preview of upcoming AI assistant feature
+- **Responsive Design**: Mobile and desktop optimized
+
+### Admin Features
+- **Access Management**: View all system accesses with user assignment counts
+- **User Management**: Create and view all users
+- **Access Creation**: Define new access types
+- **Distinct UI**: Purple/indigo gradient theme for admin sections
+
+## Quick Start
+
+\`\`\`bash
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.local.example .env.local
+# Edit .env.local with your settings
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+# Open http://localhost:3000
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+\`\`\`env
+BACKEND_URL=http://localhost:8090
+ADMIN_SECRET_KEY=password123
+SESSION_SECRET=your-session-secret
+NODE_ENV=development
+\`\`\`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+- Next.js 14 (App Router), TypeScript 5.3+
+- Tailwind CSS 3+, shadcn/ui
+- React Hook Form + Zod
+- HTTP-only encrypted session cookies
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+\`\`\`
+frontend/src/
+├── app/              # Pages (user dashboard, admin dashboard, login)
+├── components/       # UI components (admin, user, chat, ui)
+├── lib/              # Utilities (auth, api-client, validations)
+├── hooks/            # Custom hooks (useAuth, useApi)
+├── contexts/         # React contexts (AuthContext)
+└── types/            # TypeScript definitions
+\`\`\`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Available Routes
 
-## Deploy on Vercel
+- \`/\` - User dashboard (protected)
+- \`/login\` - Login page
+- \`/admin\` - Admin dashboard (admin only)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Docker
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+\`\`\`bash
+docker compose up --build
+# Frontend: http://localhost:3000
+# Backend: http://localhost:8090
+\`\`\`
+
+## Testing
+
+**Test Users:**
+- admin (all accesses)
+- isak, alice (regular users)
+
+**User Flow:** Login → View accesses → Logout
+**Admin Flow:** Login as admin → View/create accesses → View/create users
+
+See full documentation in specs/002-web-admin-frontend/

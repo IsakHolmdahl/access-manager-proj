@@ -236,14 +236,14 @@
 - [ ] T070 [P] Add mobile navigation component with bottom nav for tablets/mobile in frontend/src/components/layout/MobileNav.tsx
 - [ ] T071 [P] Add hamburger menu for mobile secondary actions in frontend/src/components/layout/HamburgerMenu.tsx
 - [ ] T072 [P] Add responsive breakpoints and layouts across all pages using Tailwind responsive prefixes
-- [ ] T073 [P] Add mobile-specific chat collapse/expand functionality in frontend/src/components/chat/ChatInterface.tsx
+- [X] T073 [P] Add mobile-specific chat collapse/expand functionality in frontend/src/components/chat/ChatInterface.tsx
 
 ### Error Handling & Loading States
 
 - [ ] T074 [P] Add loading skeletons for access lists in frontend/src/components/ui/Skeleton.tsx
-- [ ] T075 [P] Add toast notifications for success/error messages using shadcn/ui toast in frontend/src/components/ui/Toaster.tsx
+- [X] T075 [P] Add toast notifications for success/error messages using shadcn/ui toast in frontend/src/components/ui/Toaster.tsx
 - [ ] T076 [P] Add error boundary component for graceful error handling in frontend/src/components/ErrorBoundary.tsx
-- [ ] T077 [P] Add retry logic for failed API calls in frontend/src/lib/api-client.ts
+- [X] T077 [P] Add retry logic for failed API calls in frontend/src/lib/api-client.ts
 
 ### Performance & Optimization
 
@@ -261,7 +261,7 @@
 
 ### Documentation & Validation
 
-- [ ] T086 [P] Create README.md for frontend/ directory with setup instructions
+- [X] T086 [P] Create README.md for frontend/ directory with setup instructions
 - [ ] T087 [P] Add inline code comments for complex authentication logic
 - [ ] T088 [P] Add JSDoc comments to all exported functions and components
 - [ ] T089 [P] Validate Docker Compose setup with both services running
@@ -285,7 +285,7 @@
 
 ### Visual Distinction & Security
 
-- [ ] T101 [P] [FR-012] Add distinct visual styling for admin layout (different header color, admin badge, distinct theme) in frontend/src/app/admin/layout.tsx
+- [X] T101 [P] [FR-012] Add distinct visual styling for admin layout (different header color, admin badge, distinct theme) in frontend/src/app/admin/layout.tsx
 - [ ] T102 [P] Add comprehensive RBAC verification test - ensure regular users cannot access admin functions via URL manipulation, API calls, or client-side state modification in frontend/src/middleware.ts and all admin API routes
 
 ---
