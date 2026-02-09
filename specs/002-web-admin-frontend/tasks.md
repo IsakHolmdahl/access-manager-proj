@@ -25,18 +25,18 @@
 
 **Purpose**: Project initialization and basic structure for Next.js frontend
 
-- [ ] T001 Create frontend/ directory structure per implementation plan
-- [ ] T002 Initialize Next.js 14 project with TypeScript in frontend/
-- [ ] T003 [P] Install core dependencies: React 18+, TypeScript 5.3+, Tailwind CSS 3+, Zod, React Hook Form in frontend/package.json
-- [ ] T004 [P] Initialize shadcn/ui and install required components (button, input, label, form, card, table, dialog, dropdown-menu, toast, alert, separator, badge, avatar, sheet) in frontend/
-- [ ] T005 [P] Configure Tailwind CSS with shadcn/ui theme in frontend/tailwind.config.ts
-- [ ] T006 [P] Configure TypeScript compiler options in frontend/tsconfig.json
-- [ ] T007 [P] Configure Next.js for standalone output and environment variables in frontend/next.config.js
-- [ ] T008 [P] Create .env.local template with BACKEND_URL, ADMIN_SECRET_KEY, SESSION_SECRET in frontend/.env.local
-- [ ] T009 [P] Create global styles and Tailwind base in frontend/src/styles/globals.css
-- [ ] T010 Create frontend Dockerfile with multi-stage build (deps, builder, runner) in frontend/Dockerfile
-- [ ] T011 Update docker-compose.yml to include frontend service with depends_on backend
-- [ ] T012 [P] Update backend CORS configuration to allow frontend origin (localhost:3000, frontend:3000) in src/api/main.py
+- [X] T001 Create frontend/ directory structure per implementation plan
+- [X] T002 Initialize Next.js 14 project with TypeScript in frontend/
+- [X] T003 [P] Install core dependencies: React 18+, TypeScript 5.3+, Tailwind CSS 3+, Zod, React Hook Form in frontend/package.json
+- [X] T004 [P] Initialize shadcn/ui and install required components (button, input, label, form, card, table, dialog, dropdown-menu, sonner, alert, separator, badge, avatar, sheet) in frontend/
+- [X] T005 [P] Configure Tailwind CSS with shadcn/ui theme in frontend/tailwind.config.ts
+- [X] T006 [P] Configure TypeScript compiler options in frontend/tsconfig.json
+- [X] T007 [P] Configure Next.js for standalone output and environment variables in frontend/next.config.js
+- [X] T008 [P] Create .env.local template with BACKEND_URL, ADMIN_SECRET_KEY, SESSION_SECRET in frontend/.env.local
+- [X] T009 [P] Create global styles and Tailwind base in frontend/src/styles/globals.css
+- [X] T010 Create frontend Dockerfile with multi-stage build (deps, builder, runner) in frontend/Dockerfile
+- [X] T011 Update docker-compose.yml to include frontend service with depends_on backend
+- [X] T012 [P] Update backend CORS configuration to allow frontend origin (localhost:3000, frontend:3000) in src/api/main.py
 
 ---
 
