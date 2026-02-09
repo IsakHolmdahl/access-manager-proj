@@ -240,3 +240,39 @@ export const apiClient = {
   upload: apiUpload,
   buildQueryString,
 };
+
+/**
+ * Admin API Methods
+ */
+
+/**
+ * Fetch all accesses with user counts (admin only)
+ */
+export async function fetchAdminAccesses() {
+  return apiGet('/api/admin/accesses');
+}
+
+/**
+ * Fetch all users (admin only)
+ */
+export async function fetchAdminUsers() {
+  return apiGet('/api/admin/users');
+}
+
+/**
+ * Create a new user (admin only)
+ */
+export async function createUser(userData: { username: string; password: string }) {
+  return apiPost('/api/admin/users', userData);
+}
+
+/**
+ * Create a new access (admin only)
+ */
+export async function createAccess(accessData: {
+  name: string;
+  description?: string;
+  renewal_period?: number;
+}) {
+  return apiPost('/api/admin/accesses', accessData);
+}
