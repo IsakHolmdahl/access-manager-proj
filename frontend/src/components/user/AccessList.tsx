@@ -7,10 +7,21 @@
 import { AccessListProps } from '@/types';
 import { AccessCard } from './AccessCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { AccessCardSkeleton } from '@/components/ui/Skeleton';
 import { Key } from 'lucide-react';
 
 export function AccessList({ accesses, isLoading, emptyMessage, showUserCount }: AccessListProps) {
-  if (!isLoading && accesses.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <AccessCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (accesses.length === 0) {
     return (
       <EmptyState
         title="No Accesses"

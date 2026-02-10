@@ -119,8 +119,9 @@ export function AccessDetailModal({ access, onClose, onUpdate }: AccessDetailMod
                 size="sm"
                 onClick={() => setShowAssignDialog(true)}
                 className="gap-2"
+                aria-label={`Assign ${access.name} to a user`}
               >
-                <UserPlus className="h-4 w-4" />
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
                 Assign to User
               </Button>
             </div>
@@ -156,11 +157,13 @@ export function AccessDetailModal({ access, onClose, onUpdate }: AccessDetailMod
                       disabled={removingUserId !== null}
                       className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                       title="Remove access"
+                      aria-label={`Remove ${access.name} from ${user.username}`}
+                      aria-busy={removingUserId === user.id}
                     >
                       {removingUserId === user.id ? (
                         <LoadingSpinner size="sm" />
                       ) : (
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4" aria-hidden="true" />
                       )}
                     </Button>
                   </div>

@@ -111,20 +111,21 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <Tabs defaultValue="accesses" className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="accesses" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
+          <TabsTrigger value="accesses" className="flex items-center gap-2" aria-label="View and manage accesses">
+            <Key className="h-4 w-4" aria-hidden="true" />
             Accesses
           </TabsTrigger>
           <TabsTrigger
             value="users"
             className="flex items-center gap-2"
+            aria-label="View and manage users"
             onClick={() => {
               if (users.length === 0 && !isLoadingUsers) {
                 fetchUsers();
               }
             }}
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4" aria-hidden="true" />
             Users
           </TabsTrigger>
         </TabsList>
@@ -193,12 +194,14 @@ export default function AdminDashboard() {
                   size="sm"
                   onClick={fetchAccesses}
                   disabled={isLoadingAccesses}
+                  aria-label="Refresh access list"
+                  aria-busy={isLoadingAccesses}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
                   Refresh
                 </Button>
-                <Button size="sm" onClick={() => setShowAccessDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button size="sm" onClick={() => setShowAccessDialog(true)} aria-label="Create new access">
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   Create Access
                 </Button>
               </div>
@@ -267,12 +270,14 @@ export default function AdminDashboard() {
                   size="sm"
                   onClick={fetchUsers}
                   disabled={isLoadingUsers}
+                  aria-label="Refresh user list"
+                  aria-busy={isLoadingUsers}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
                   Refresh
                 </Button>
-                <Button size="sm" onClick={() => setShowUserDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button size="sm" onClick={() => setShowUserDialog(true)} aria-label="Create new user">
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   Create User
                 </Button>
               </div>

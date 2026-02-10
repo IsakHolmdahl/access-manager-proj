@@ -36,7 +36,7 @@
 
 import { AdminAccessCard } from './AdminAccessCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { AdminAccessCardSkeleton } from '@/components/ui/Skeleton';
 
 interface AdminAccess {
   id: string;
@@ -56,8 +56,10 @@ interface AdminAccessListProps {
 export function AdminAccessList({ accesses, isLoading, onUpdate }: AdminAccessListProps) {
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <LoadingSpinner size="lg" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <AdminAccessCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
