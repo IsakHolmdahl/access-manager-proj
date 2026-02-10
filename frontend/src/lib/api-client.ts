@@ -16,8 +16,12 @@ import { ERROR_MESSAGES } from '@/types';
 
 /**
  * Base API URL (from environment)
+ * Uses API_URL for server-side requests (Docker network)
+ * Uses NEXT_PUBLIC_API_URL for client-side requests (browser)
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE_URL = typeof window === 'undefined'
+  ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || '')
+  : (process.env.NEXT_PUBLIC_API_URL || '');
 
 /**
  * Default fetch options

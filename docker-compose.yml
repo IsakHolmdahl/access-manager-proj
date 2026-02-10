@@ -39,7 +39,14 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # Client-side API URL (browser requests to backend)
       - NEXT_PUBLIC_API_URL=http://localhost:8090
+      # Server-side API URL (Next.js API routes to backend)
+      - BACKEND_URL=http://backend:8000
+      # Admin secret key for authentication (must match backend)
+      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY}
+      # Session secret for cookie encryption
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-key-in-production}
       - NODE_ENV=${NODE_ENV:-development}
     depends_on:
       backend:
