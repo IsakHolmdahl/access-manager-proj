@@ -89,7 +89,7 @@ function calculateBackoff(attempt: number, baseDelay: number, maxBackoff: number
  * Retryable: 5xx server errors, network errors, timeouts
  * Not retryable: 4xx client errors, authentication errors
  */
-function isRetryableError(status?: number, errorType?: APIErrorType): boolean {
+function isRetryableError(status?: number, errorType?: string): boolean {
   // Network errors and timeouts are always retryable
   if (errorType === APIErrorType.NETWORK_ERROR) {
     return true;
