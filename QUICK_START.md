@@ -18,26 +18,25 @@ curl http://localhost:8090/health
 
 ### 2. Start Services (if not running)
 
-**Development Mode (Recommended - No Conflicts!)**:
+**Single Command (Recommended)**:
 ```bash
-# Backend (Docker - backend only, no port conflicts!)
+# Start entire application (backend + frontend)
 docker compose up -d
 
-# Frontend (npm dev server with hot reload)
+# That's it! Everything runs in Docker
+```
+
+**Alternative - Separate Dev Server** (for hot reload development):
+```bash
+# Backend only
+docker compose up backend -d
+
+# Frontend with hot reload
 cd frontend
 npm run dev
 ```
 
-**Production Mode (Full Stack Testing)**:
-```bash
-# Stop npm dev server first (if running)
-kill $(lsof -ti:3000)
-
-# Start full stack in Docker
-docker compose -f docker-compose.prod.yml up -d
-```
-
-> **Note**: The default `docker compose up` now starts backend only, so there are NO port conflicts with the npm dev server. This is the recommended setup for development.
+> **Note**: The default `docker compose up` starts both backend and frontend in Docker. If port 3000 is in use, stop any npm dev server first: `kill $(lsof -ti:3000)`
 
 ### 3. Test Login
 **Admin User**:
