@@ -1,7 +1,5 @@
-# Default Docker Compose - Backend Only
-# This is the default configuration for development
-# Frontend should be run via: cd frontend && npm run dev
-# For full stack in Docker, use: docker compose -f docker-compose.prod.yml up
+# Docker Compose - Full Stack
+# Single command to run everything: docker compose up
 
 services:
   backend:
@@ -21,9 +19,7 @@ services:
       - TEMP_DIRECTORY=${TEMP_DIRECTORY:-./data/temp}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      # Mount data directory for persistence
       - ./data:/app/data
-      # Mount source code for development (comment out in production)
       - ./src:/app/src:ro
     restart: unless-stopped
     healthcheck:
@@ -32,6 +28,28 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    networks:
+      - access-mgmt-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: access-management-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8090
+      - NODE_ENV=${NODE_ENV:-development}
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
     networks:
       - access-mgmt-network
 
