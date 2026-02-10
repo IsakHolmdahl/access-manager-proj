@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                 </Button>
               </div>
             </div>
-            <AdminAccessList accesses={accesses} isLoading={isLoadingAccesses} />
+            <AdminAccessList accesses={accesses} isLoading={isLoadingAccesses} onUpdate={fetchAccesses} />
           </div>
         </TabsContent>
 

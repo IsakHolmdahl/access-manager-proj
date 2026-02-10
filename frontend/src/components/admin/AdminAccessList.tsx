@@ -50,9 +50,10 @@ interface AdminAccess {
 interface AdminAccessListProps {
   accesses: AdminAccess[];
   isLoading: boolean;
+  onUpdate?: () => void;
 }
 
-export function AdminAccessList({ accesses, isLoading }: AdminAccessListProps) {
+export function AdminAccessList({ accesses, isLoading, onUpdate }: AdminAccessListProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -74,7 +75,7 @@ export function AdminAccessList({ accesses, isLoading }: AdminAccessListProps) {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {accesses.map((access) => (
-          <AdminAccessCard key={access.id} access={access} />
+          <AdminAccessCard key={access.id} access={access} onUpdate={onUpdate} />
         ))}
       </div>
     </div>

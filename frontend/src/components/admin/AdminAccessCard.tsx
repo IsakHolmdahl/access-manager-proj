@@ -23,9 +23,10 @@ interface AdminAccess {
 
 interface AdminAccessCardProps {
   access: AdminAccess;
+  onUpdate?: () => void;
 }
 
-export function AdminAccessCard({ access }: AdminAccessCardProps) {
+export function AdminAccessCard({ access, onUpdate }: AdminAccessCardProps) {
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -75,6 +76,7 @@ export function AdminAccessCard({ access }: AdminAccessCardProps) {
         <AccessDetailModal
           access={access}
           onClose={() => setShowModal(false)}
+          onUpdate={onUpdate}
         />
       )}
     </>
