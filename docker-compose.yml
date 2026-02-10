@@ -1,3 +1,8 @@
+# Default Docker Compose - Backend Only
+# This is the default configuration for development
+# Frontend should be run via: cd frontend && npm run dev
+# For full stack in Docker, use: docker compose -f docker-compose.prod.yml up
+
 services:
   backend:
     build:
@@ -27,35 +32,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-    networks:
-      - access-mgmt-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: access-management-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - BACKEND_URL=http://backend:8000
-      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY:-your-secret-admin-key-change-this-in-production}
-      - SESSION_SECRET=${SESSION_SECRET:-your-session-secret-change-this}
-      - NODE_ENV=${NODE_ENV:-production}
-    depends_on:
-      backend:
-        condition: service_healthy
-    volumes:
-      - ./frontend/src:/app/src      # Hot reload in development
-      - /app/node_modules             # Don't override node_modules
-      - /app/.next                    # Don't override build artifacts
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
     networks:
       - access-mgmt-network
 
