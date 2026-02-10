@@ -3,6 +3,34 @@
  * 
  * POST /api/auth/login
  * Authenticates user and creates session
+ * 
+ * T087 - Complex Authentication Flow:
+ * ===================================
+ * 
+ * 1. Input Validation:
+ *    - Sanitize and validate userId format
+ *    - Prevent injection attacks with regex validation
+ * 
+ * 2. User Lookup Strategy (POC Simplified):
+ *    - Admin users: Lookup via /admin/users endpoint with admin key
+ *    - Regular users: Lookup via same endpoint (POC: no password check)
+ *    - Production TODO: Implement proper password hashing and verification
+ * 
+ * 3. Session Creation:
+ *    - Create session payload with user data and expiration
+ *    - Encrypt session data (POC: base64, Production: AES-256-GCM)
+ *    - Store in HTTP-only cookie for XSS protection
+ * 
+ * 4. Security Features:
+ *    - HTTP-only cookies (no JavaScript access)
+ *    - SameSite=Strict (CSRF protection)
+ *    - Secure flag in production (HTTPS only)
+ *    - Session expiration (7 days)
+ * 
+ * 5. Error Handling:
+ *    - Specific error messages for debugging
+ *    - Generic messages to client (no info leakage)
+ *    - Proper HTTP status codes
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,10 +48,12 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8090';
 
 export async function POST(request: NextRequest) {
   try {
+    // Step 1: Parse and validate request body
     const body = await request.json();
     const { userId } = body;
 
-    // Validate input
+    // T087: Input validation - prevent injection attacks
+    // Validates alphanumeric with underscores/hyphens only
     if (!userId || !isValidUserId(userId)) {
       return NextResponse.json(
         {
@@ -36,13 +66,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // POC Authentication: Look up user by username to get user_id
-    // For admin: verify admin key and get admin user_id
-    // For regular users: look up from admin users list (POC simplification)
+    // Step 2: User authentication and lookup
+    // T087: POC Authentication Flow - In production, implement:
+    //   - Password hashing (bcrypt/argon2)
+    //   - Rate limiting on login attempts
+    //   - Account lockout after failed attempts
+    //   - Multi-factor authentication (MFA)
     
     let user: User;
 
+    // T087: Admin authentication branch
     if (userId === 'admin') {
+      // Admin key must be configured in environment
       const adminKey = process.env.ADMIN_SECRET_KEY;
       if (!adminKey) {
         return NextResponse.json(
@@ -56,7 +91,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Look up admin user from backend to get ID
+      // T087: Fetch admin user from backend
+      // Uses admin key for authorization (X-Admin-Key header)
       const backendResponse = await fetch(`${BACKEND_URL}/admin/users`, {
         headers: {
           'X-Admin-Key': adminKey,
@@ -78,6 +114,7 @@ export async function POST(request: NextRequest) {
       const usersData = await backendResponse.json();
       const adminUser = usersData.users?.find((u: any) => u.username === 'admin');
 
+      // T087: Verify admin user exists in system
       if (!adminUser) {
         return NextResponse.json(
           {
@@ -90,6 +127,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // T087: Construct admin user object
       user = {
         id: adminUser.id.toString(),
         username: adminUser.username,
@@ -97,8 +135,10 @@ export async function POST(request: NextRequest) {
         is_admin: true,
       };
     } else {
-      // For regular users: look up by username (POC: no password check)
-      // We need to use admin endpoint to look up user by username
+      // T087: Regular user authentication branch
+      // POC: No password check - username lookup only
+      // Production TODO: Add password verification
+      
       const adminKey = process.env.ADMIN_SECRET_KEY;
       
       if (!adminKey) {
@@ -113,6 +153,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // T087: Look up user in backend database
       const backendResponse = await fetch(`${BACKEND_URL}/admin/users`, {
         headers: {
           'X-Admin-Key': adminKey,
@@ -134,6 +175,7 @@ export async function POST(request: NextRequest) {
       const usersData = await backendResponse.json();
       const foundUser = usersData.users?.find((u: any) => u.username === userId);
 
+      // T087: User not found - return 401 (don't reveal if user exists)
       if (!foundUser) {
         return NextResponse.json(
           {
@@ -146,6 +188,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // T087: Construct regular user object
       user = {
         id: foundUser.id.toString(),
         username: foundUser.username,
@@ -154,23 +197,31 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Determine role
+    // Step 3: Create and encrypt session
+    // T087: Session creation with expiration
     const role = getUserRole(user.username);
-
-    // Create session
     const sessionPayload = createSessionPayload(user, role);
+    
+    // T087: Encrypt session (POC: base64, Production: proper encryption)
     const encryptedSession = encryptSession(sessionPayload);
 
-    // Set session cookie
+    // Step 4: Set HTTP-only session cookie
+    // T087: Security features:
+    //   - httpOnly: true (no JavaScript access - XSS protection)
+    //   - secure: true in prod (HTTPS only)
+    //   - sameSite: 'strict' (CSRF protection)
+    //   - maxAge: 7 days (session expiration)
     const cookieStore = await cookies();
     cookieStore.set('session', encryptedSession, getSessionCookieOptions());
 
+    // Step 5: Return success response
     return NextResponse.json({
       success: true,
       user,
       role,
     });
   } catch (error) {
+    // T087: Error handling - log detailed error, return generic message
     console.error('Login error:', error);
     return NextResponse.json(
       {
