@@ -123,4 +123,27 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* T095 - Enhanced focus indicators for keyboard navigation */
+  /* Visible focus rings for accessibility (WCAG 2.4.7) */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  
+  /* High contrast focus for form inputs */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Keyboard navigation support - don't show focus on mouse click */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
 }

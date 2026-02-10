@@ -2,6 +2,13 @@
  * Login Form Component
  * 
  * Form for user authentication
+ * 
+ * Accessibility (T092, T093, T095):
+ * - ARIA labels and descriptions
+ * - Keyboard navigation support
+ * - Focus indicators (styled via Tailwind)
+ * - Form validation feedback
+ * - Loading state announcements
  */
 
 'use client';
@@ -45,6 +52,68 @@ export function LoginForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  return (
+    <form 
+      onSubmit={handleSubmit(onSubmit)} 
+      className="space-y-4"
+      aria-label="Login form"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="userId">User ID</Label>
+        <Input
+          id="userId"
+          type="text"
+          placeholder="Enter your user ID or 'admin'"
+          autoComplete="username"
+          disabled={isLoading}
+          aria-required="true"
+          aria-invalid={!!errors.userId}
+          aria-describedby={errors.userId ? "userId-error" : "userId-help"}
+          {...register('userId')}
+        />
+        {errors.userId && (
+          <p 
+            id="userId-error" 
+            className="text-sm text-red-500"
+            role="alert"
+          >
+            {errors.userId.message}
+          </p>
+        )}
+        <p 
+          id="userId-help" 
+          className="text-xs text-muted-foreground"
+        >
+          Enter your username or "admin" for administrator access
+        </p>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" role="alert">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isLoading}
+        aria-busy={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            <span>Logging in...</span>
+          </>
+        ) : (
+          'Log In'
+        )}
+      </Button>
+    </form>
+  );
+}
   };
 
   return (
