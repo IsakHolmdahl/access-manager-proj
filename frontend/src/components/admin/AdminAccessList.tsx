@@ -2,6 +2,34 @@
  * Admin Access List Component
  * 
  * Displays all accesses in the system with user assignment information
+ * 
+ * T099 - Performance Optimization Notes:
+ * Current implementation renders all items directly (suitable for <200 items).
+ * 
+ * For large datasets (500+ items), consider implementing:
+ * 1. Virtualization: Use react-window or react-virtual for efficient rendering
+ * 2. Pagination: Add server-side pagination (20-50 items per page)
+ * 3. Infinite scroll: Load more items as user scrolls
+ * 
+ * Example virtualization with react-window:
+ * ```typescript
+ * import { FixedSizeList } from 'react-window';
+ * 
+ * <FixedSizeList
+ *   height={600}
+ *   itemCount={accesses.length}
+ *   itemSize={100}
+ *   width="100%"
+ * >
+ *   {({ index, style }) => (
+ *     <div style={style}>
+ *       <AdminAccessCard access={accesses[index]} />
+ *     </div>
+ *   )}
+ * </FixedSizeList>
+ * ```
+ * 
+ * Current dataset size: ~100 accesses (no performance issues expected)
  */
 
 'use client';

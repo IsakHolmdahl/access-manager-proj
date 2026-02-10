@@ -217,7 +217,24 @@ async function apiRequest<T>(
 }
 
 /**
- * GET request
+ * Sends a GET request to the API
+ * 
+ * Includes automatic retry with exponential backoff for transient failures (T097)
+ * 
+ * @template T - Expected response data type
+ * @param endpoint - API endpoint (e.g., '/api/users' or full URL)
+ * @param config - Optional configuration (timeout, retries, etc.)
+ * @returns Promise resolving to APIResponse with data or error
+ * 
+ * @example
+ * ```typescript
+ * const response = await apiGet<User[]>('/api/users');
+ * if (response.data) {
+ *   console.log(response.data);
+ * } else {
+ *   console.error(response.error);
+ * }
+ * ```
  */
 export async function apiGet<T>(
   endpoint: string,
@@ -227,7 +244,22 @@ export async function apiGet<T>(
 }
 
 /**
- * POST request
+ * Sends a POST request to the API
+ * 
+ * Automatically serializes body to JSON and includes retry logic (T097)
+ * 
+ * @template T - Expected response data type
+ * @param endpoint - API endpoint
+ * @param body - Request body (will be JSON stringified)
+ * @param config - Optional configuration
+ * @returns Promise resolving to APIResponse with data or error
+ * 
+ * @example
+ * ```typescript
+ * const response = await apiPost<{ success: boolean }>('/api/login', {
+ *   userId: '123'
+ * });
+ * ```
  */
 export async function apiPost<T>(
   endpoint: string,
@@ -245,7 +277,22 @@ export async function apiPost<T>(
 }
 
 /**
- * PUT request
+ * Sends a PUT request to the API
+ * 
+ * Used for updating existing resources
+ * 
+ * @template T - Expected response data type
+ * @param endpoint - API endpoint
+ * @param body - Request body (will be JSON stringified)
+ * @param config - Optional configuration
+ * @returns Promise resolving to APIResponse with data or error
+ * 
+ * @example
+ * ```typescript
+ * const response = await apiPut<User>('/api/users/123', {
+ *   username: 'newname'
+ * });
+ * ```
  */
 export async function apiPut<T>(
   endpoint: string,
@@ -263,7 +310,19 @@ export async function apiPut<T>(
 }
 
 /**
- * DELETE request
+ * Sends a DELETE request to the API
+ * 
+ * Used for deleting resources
+ * 
+ * @template T - Expected response data type
+ * @param endpoint - API endpoint
+ * @param config - Optional configuration
+ * @returns Promise resolving to APIResponse with data or error
+ * 
+ * @example
+ * ```typescript
+ * const response = await apiDelete<{ success: boolean }>('/api/users/123');
+ * ```
  */
 export async function apiDelete<T>(
   endpoint: string,
@@ -273,7 +332,23 @@ export async function apiDelete<T>(
 }
 
 /**
- * Upload file (multipart/form-data)
+ * Uploads a file using multipart/form-data
+ * 
+ * Automatically sets correct Content-Type with boundary
+ * 
+ * @template T - Expected response data type
+ * @param endpoint - API endpoint
+ * @param formData - FormData containing file(s) and fields
+ * @param config - Optional configuration
+ * @returns Promise resolving to APIResponse with data or error
+ * 
+ * @example
+ * ```typescript
+ * const formData = new FormData();
+ * formData.append('file', fileBlob);
+ * formData.append('name', 'document.pdf');
+ * const response = await apiUpload('/api/upload', formData);
+ * ```
  */
 export async function apiUpload<T>(
   endpoint: string,
@@ -295,7 +370,18 @@ export async function apiUpload<T>(
 }
 
 /**
- * Build query string from object
+ * Builds a URL query string from an object
+ * 
+ * Filters out null/undefined values and properly encodes parameters
+ * 
+ * @param params - Object containing query parameters
+ * @returns Query string with leading '?' or empty string if no params
+ * 
+ * @example
+ * ```typescript
+ * const query = buildQueryString({ page: 1, limit: 20, filter: null });
+ * // Returns: "?page=1&limit=20"
+ * ```
  */
 export function buildQueryString(params: Record<string, any>): string {
   const query = new URLSearchParams();
@@ -327,28 +413,97 @@ export const apiClient = {
  */
 
 /**
- * Fetch all accesses with user counts (admin only)
+ * Fetches all accesses with user assignment counts (admin only)
+ * 
+ * Requires admin role. Returns access list with metadata including
+ * how many users are assigned to each access.
+ * 
+ * @returns Promise resolving to APIResponse with accesses array
+ * @throws APIError if user is not authenticated or not admin
+ * 
+ * @example
+ * ```typescript
+ * const response = await fetchAdminAccesses();
+ * if (response.data) {
+ *   const accesses = response.data.accesses;
+ *   console.log(`Found ${accesses.length} accesses`);
+ * }
+ * ```
  */
 export async function fetchAdminAccesses() {
   return apiGet('/api/admin/accesses');
 }
 
 /**
- * Fetch all users (admin only)
+ * Fetches all users in the system (admin only)
+ * 
+ * Requires admin role. Returns user list with full details.
+ * 
+ * @returns Promise resolving to APIResponse with users array
+ * @throws APIError if user is not authenticated or not admin
+ * 
+ * @example
+ * ```typescript
+ * const response = await fetchAdminUsers();
+ * if (response.data) {
+ *   console.log(`Total users: ${response.data.users.length}`);
+ * }
+ * ```
  */
 export async function fetchAdminUsers() {
   return apiGet('/api/admin/users');
 }
 
 /**
- * Create a new user (admin only)
+ * Creates a new user in the system (admin only)
+ * 
+ * Requires admin role. Password will be hashed on the server.
+ * Username must be unique.
+ * 
+ * @param userData - User creation data
+ * @param userData.username - Unique username (3-50 chars)
+ * @param userData.password - Password (min 8 chars)
+ * @returns Promise resolving to APIResponse with created user
+ * @throws APIError if username exists or validation fails
+ * 
+ * @example
+ * ```typescript
+ * const response = await createUser({
+ *   username: 'newuser',
+ *   password: 'securePass123'
+ * });
+ * if (response.data) {
+ *   console.log(`Created user: ${response.data.user.username}`);
+ * }
+ * ```
  */
 export async function createUser(userData: { username: string; password: string }) {
   return apiPost('/api/admin/users', userData);
 }
 
 /**
- * Create a new access (admin only)
+ * Creates a new access permission (admin only)
+ * 
+ * Requires admin role. Access name must be unique.
+ * 
+ * @param accessData - Access creation data
+ * @param accessData.name - Unique access name (required)
+ * @param accessData.description - Optional description
+ * @param accessData.renewal_period - Optional renewal period in days
+ * @returns Promise resolving to APIResponse with created access
+ * @throws APIError if name exists or validation fails
+ * 
+ * @example
+ * ```typescript
+ * const response = await createAccess({
+ *   name: 'VIP Access',
+ *   description: 'Premium user access',
+ *   renewal_period: 365
+ * });
+ * if (response.data) {
+ *   console.log(`Created access: ${response.data.access.name}`);
+ * }
+ * ```
  */
 export async function createAccess(accessData: {
   name: string;

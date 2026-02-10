@@ -2,6 +2,32 @@
  * Admin User List Component
  * 
  * Displays all users in the system
+ * 
+ * T099 - Performance Optimization Notes:
+ * Current implementation renders all items directly (suitable for <200 items).
+ * 
+ * For large datasets (1000+ users), consider implementing:
+ * 1. Pagination: Server-side pagination with page controls
+ * 2. Search/Filter: Add username search to reduce visible items
+ * 3. Virtualization: Use react-window for very large lists
+ * 
+ * Example pagination implementation:
+ * ```typescript
+ * const [page, setPage] = useState(1);
+ * const pageSize = 20;
+ * const paginatedUsers = users.slice((page - 1) * pageSize, page * pageSize);
+ * 
+ * <div>
+ *   {paginatedUsers.map(user => <UserCard key={user.id} user={user} />)}
+ *   <Pagination 
+ *     currentPage={page} 
+ *     totalPages={Math.ceil(users.length / pageSize)}
+ *     onPageChange={setPage}
+ *   />
+ * </div>
+ * ```
+ * 
+ * Current dataset size: ~10 users (no performance concerns)
  */
 
 'use client';

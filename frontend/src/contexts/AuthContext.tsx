@@ -29,6 +29,31 @@ const initialSession: UserSession = {
   error: null,
 };
 
+/**
+ * Authentication Context Provider
+ * 
+ * Provides authentication state and actions to all child components.
+ * Automatically checks session on mount and manages user login/logout.
+ * 
+ * Features:
+ * - Session persistence via HTTP-only cookies (T084)
+ * - Automatic session validation on mount
+ * - Role-based access control (RBAC)
+ * - Loading and error state management
+ * 
+ * @param children - React child components
+ * 
+ * @example
+ * ```typescript
+ * // In app layout
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ * 
+ * // In any child component
+ * const { session, login } = useAuth();
+ * ```
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<UserSession>(initialSession);
 
@@ -40,7 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Check if user has valid session
+   * Checks if user has a valid session
+   * 
+   * Called automatically on mount and can be called manually
+   * to refresh session state. Updates session state with user
+   * info and role if authenticated.
+   * 
+   * @example
+   * ```typescript
+   * // Manual session check after potential changes
+   * await checkSession();
+   * ```
    */
   const checkSession = async () => {
     setSession(prev => ({ ...prev, isLoading: true, error: null }));
@@ -92,7 +127,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * Login user
+   * Authenticates a user and creates a session
+   * 
+   * Sends login request to backend, which validates credentials
+   * and creates an HTTP-only session cookie. Updates local state
+   * with user info and role on success.
+   * 
+   * @param userId - User ID (numeric string)
+   * @throws Error if login fails or credentials invalid
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await login('123');
+   *   router.push('/dashboard');
+   * } catch (error) {
+   *   console.error('Login failed:', error);
+   * }
+   * ```
    */
   const login = async (userId: string) => {
     setSession(prev => ({ ...prev, isLoading: true, error: null }));
@@ -141,7 +193,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * Logout user
+   * Logs out the current user and clears session
+   * 
+   * Calls backend logout endpoint to invalidate session cookie,
+   * then clears local session state. Always succeeds locally even
+   * if backend request fails.
+   * 
+   * @example
+   * ```typescript
+   * await logout();
+   * router.push('/login');
+   * ```
    */
   const logout = async () => {
     setSession(prev => ({ ...prev, isLoading: true }));
@@ -169,7 +231,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Hook to use auth context
+ * Hook to access authentication context
+ * 
+ * Internal hook for accessing auth context. Use `useAuth()` hook instead
+ * in your components for better developer experience.
+ * 
+ * @returns Authentication context value
+ * @throws Error if used outside AuthProvider
+ * 
+ * @internal
  */
 export function useAuthContext() {
   const context = useContext(AuthContext);
