@@ -80,17 +80,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',  // For Docker deployment
   
-  env: {
-    BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8090',
-  },
+  // NOTE: Do NOT use the 'env' key here as it bakes values at build time.
+  // Use process.env directly in your code for runtime environment variables.
+  // This ensures Docker environment variables work correctly.
   
   // Strict mode for better development experience
   reactStrictMode: true,
   
-  // Remove console logs in production (T085)
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
+  // Keep console logs in production for debugging (can be removed later)
+  // compiler: {
+  //   removeConsole: process.env.NODE_ENV === 'production',
+  // },
   
   // T085 - Security headers (Next.js built-in)
   async headers() {
