@@ -17,14 +17,27 @@ curl http://localhost:8090/health
 ```
 
 ### 2. Start Services (if not running)
-```bash
-# Backend (Docker)
-docker compose up -d
 
-# Frontend (Development)
+**Development Mode (Recommended)**:
+```bash
+# Backend (Docker - backend only)
+docker compose -f docker-compose.dev.yml up -d
+
+# Frontend (npm dev server with hot reload)
 cd frontend
 npm run dev
 ```
+
+**Production Mode (Testing)**:
+```bash
+# Stop npm dev server first (if running)
+kill $(lsof -ti:3000)
+
+# Start full stack in Docker
+docker compose up -d
+```
+
+> **Note**: Development mode is recommended for active development as it provides instant hot reload for the frontend while keeping the backend in a consistent Docker environment.
 
 ### 3. Test Login
 **Admin User**:
