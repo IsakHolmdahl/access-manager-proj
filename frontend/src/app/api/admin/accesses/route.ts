@@ -71,27 +71,44 @@ export async function GET() {
       );
     }
 
-    // Fetch all accesses from backend
-    const accessesResponse = await fetch(`${BACKEND_URL}/admin/accesses`, {
-      headers: {
-        'X-Admin-Key': ADMIN_KEY,
-      },
-    });
+    // Fetch all accesses from backend (backend max limit is 100, so fetch all pages)
+    let allAccesses: any[] = [];
+    let offset = 0;
+    const limit = 100;
+    let hasMore = true;
 
-    if (!accessesResponse.ok) {
-      const errorData = await accessesResponse.json().catch(() => ({}));
-      return NextResponse.json(
+    while (hasMore) {
+      const accessesResponse = await fetch(
+        `${BACKEND_URL}/admin/accesses?limit=${limit}&offset=${offset}`,
         {
-          error: {
-            message: errorData.error?.message || 'Failed to fetch accesses',
-            type: errorData.error?.type || 'ServerError',
+          headers: {
+            'X-Admin-Key': ADMIN_KEY,
           },
-        },
-        { status: accessesResponse.status }
+        }
       );
+
+      if (!accessesResponse.ok) {
+        const errorData = await accessesResponse.json().catch(() => ({}));
+        return NextResponse.json(
+          {
+            error: {
+              message: errorData.error?.message || 'Failed to fetch accesses',
+              type: errorData.error?.type || 'ServerError',
+            },
+          },
+          { status: accessesResponse.status }
+        );
+      }
+
+      const pageData = await accessesResponse.json();
+      allAccesses = allAccesses.concat(pageData.accesses || []);
+      
+      // Check if there are more results
+      hasMore = pageData.accesses && pageData.accesses.length === limit;
+      offset += limit;
     }
 
-    const accessesData = await accessesResponse.json();
+    const accessesData = { accesses: allAccesses, total: allAccesses.length };
 
     // Fetch all users to count assignments
     const usersResponse = await fetch(`${BACKEND_URL}/admin/users`, {

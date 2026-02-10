@@ -74,27 +74,44 @@ export async function GET() {
       );
     }
 
-    // Fetch users from backend
-    const response = await fetch(`${BACKEND_URL}/admin/users`, {
-      headers: {
-        'X-Admin-Key': ADMIN_KEY,
-      },
-    });
+    // Fetch all users from backend (backend max limit is 100, so fetch all pages)
+    let allUsers: any[] = [];
+    let offset = 0;
+    const limit = 100;
+    let hasMore = true;
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
+    while (hasMore) {
+      const response = await fetch(
+        `${BACKEND_URL}/admin/users?limit=${limit}&offset=${offset}`,
         {
-          error: {
-            message: errorData.error?.message || 'Failed to fetch users',
-            type: errorData.error?.type || 'ServerError',
+          headers: {
+            'X-Admin-Key': ADMIN_KEY,
           },
-        },
-        { status: response.status }
+        }
       );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return NextResponse.json(
+          {
+            error: {
+              message: errorData.error?.message || 'Failed to fetch users',
+              type: errorData.error?.type || 'ServerError',
+            },
+          },
+          { status: response.status }
+        );
+      }
+
+      const pageData = await response.json();
+      allUsers = allUsers.concat(pageData.users || []);
+      
+      // Check if there are more results
+      hasMore = pageData.users && pageData.users.length === limit;
+      offset += limit;
     }
 
-    const data = await response.json();
+    const data = { users: allUsers, total: allUsers.length };
 
     return NextResponse.json(data);
   } catch (error) {
