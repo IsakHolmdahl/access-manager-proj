@@ -37,6 +37,7 @@
 - [ ] T009 Create base FastAPI app in `src/agent/main.py` with health endpoint `/agent/health`
 - [ ] T010 Load access documentation at startup in `src/agent/prompts/system_prompt.py` - read from DOCUMENTATION_PATH
 - [ ] T011 Build system prompt generator in `src/agent/prompts/system_prompt.py` - embed documentation content and define agent behavior
+- [ ] T012 Add documentation file error handling in `src/agent/prompts/system_prompt.py` - graceful startup failure with clear error message if docs/accesses.md is missing, empty, or unreadable
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -50,14 +51,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Implement `list_available_accesses()` tool in `src/agent/tools/access_tools.py` - GET /admin/accesses with X-Admin-Key header
-- [ ] T013 [P] [US1] Implement `get_user_accesses(user_id, username)` tool in `src/agent/tools/user_tools.py` - GET /users/{user_id}/accesses
-- [ ] T014 [P] [US1] Implement `grant_access_to_user(user_id, access_name, username)` tool in `src/agent/tools/access_tools.py` - POST /users/{user_id}/accesses
-- [ ] T015 [US1] Initialize Strands Agent in `src/agent/agent.py` with Claude Sonnet 4, system prompt, and register all tools
-- [ ] T016 [US1] Implement POST `/agent/chat` endpoint in `src/agent/main.py` - accepts ChatRequest, invokes agent, returns ChatResponse
-- [ ] T017 [US1] Add error handling in chat endpoint for backend API failures (503 when backend unavailable)
-- [ ] T018 [US1] Add validation in tools to prevent granting access user already has (check with get_user_accesses first)
-- [ ] T019 [US1] Add logging for agent tool calls in `src/agent/tools/` - log tool name, parameters, and result status
+- [ ] T013 [P] [US1] Implement `list_available_accesses()` tool in `src/agent/tools/access_tools.py` - GET /admin/accesses with X-Admin-Key header
+- [ ] T014 [P] [US1] Implement `get_user_accesses(user_id, username)` tool in `src/agent/tools/user_tools.py` - GET /users/{user_id}/accesses
+- [ ] T015 [P] [US1] Implement `grant_access_to_user(user_id, access_name, username)` tool in `src/agent/tools/access_tools.py` - POST /users/{user_id}/accesses
+- [ ] T016 [US1] Initialize Strands Agent in `src/agent/agent.py` with Claude Sonnet 4, system prompt, and register all tools
+- [ ] T017 [US1] Implement POST `/agent/chat` endpoint in `src/agent/main.py` - accepts ChatRequest, invokes agent, returns ChatResponse
+- [ ] T018 [US1] Add error handling in chat endpoint for backend API failures (503 when backend unavailable)
+- [ ] T019 [US1] Add validation in tools to prevent granting access user already has (check with get_user_accesses first)
+- [ ] T020 [US1] Add logging for agent tool calls in `src/agent/tools/` - log tool name, parameters, and result status
+- [ ] T021 [US1] Add "no matches found" handling in system prompt - agent must communicate clearly when no relevant accesses exist, suggest refining the request or browsing available accesses
+- [ ] T022 [US1] Add scope boundary enforcement in system prompt - agent must politely decline requests unrelated to access management (e.g., "I can only help with access requests and discovery")
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can request access via chat API and receive immediate grants
 
@@ -71,10 +74,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Enhance system prompt in `src/agent/prompts/system_prompt.py` to handle discovery queries (distinguish browse vs request intent)
-- [ ] T021 [US2] Add documentation parsing logic to extract team-to-access mappings from markdown (supports flexible formats)
-- [ ] T022 [US2] Implement discovery response formatting - present accesses grouped by team or category with descriptions
-- [ ] T023 [US2] Add logic to prevent accidental grants during discovery (agent must explicitly confirm before calling grant_access_to_user)
+- [ ] T023 [US2] Enhance system prompt in `src/agent/prompts/system_prompt.py` to handle discovery queries (distinguish browse vs request intent)
+- [ ] T024 [US2] Add documentation parsing logic to extract team-to-access mappings from markdown (supports flexible formats)
+- [ ] T025 [US2] Implement discovery response formatting - present accesses grouped by team or category with descriptions
+- [ ] T026 [US2] Add logic to prevent accidental grants during discovery (agent must explicitly confirm before calling grant_access_to_user)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - users can browse OR request accesses
 
@@ -88,10 +91,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Implement documentation reload mechanism in `src/agent/prompts/system_prompt.py` - reload on file change (use watchdog or startup-only reload for POC)
-- [ ] T025 [US3] Add flexible markdown parsing in system prompt builder - handle various formats (lists, tables, paragraphs)
-- [ ] T026 [US3] Add deprecation warning logic - detect "deprecated" keyword in documentation and surface warnings to users
-- [ ] T027 [US3] Test documentation flexibility - verify agent works with different markdown structures (bullet lists vs tables vs prose)
+- [ ] T027 [US3] Implement documentation reload mechanism in `src/agent/prompts/system_prompt.py` - reload on file change (use watchdog or startup-only reload for POC)
+- [ ] T028 [US3] Add flexible markdown parsing in system prompt builder - handle various formats (lists, tables, paragraphs)
+- [ ] T029 [US3] Add deprecation warning logic - detect "deprecated" keyword in documentation and surface warnings to users
+- [ ] T030 [US3] Test documentation flexibility - verify agent works with different markdown structures (bullet lists vs tables vs prose)
 
 **Checkpoint**: All user stories should now be independently functional - agent adapts to documentation changes
 
@@ -101,18 +104,18 @@
 
 **Purpose**: Enhancements and improvements that affect multiple user stories
 
-- [ ] T028 [P] Implement POST `/agent/chat/stream` endpoint in `src/agent/main.py` - Server-Sent Events streaming response
-- [ ] T029 [P] Add session timeout handling - expire sessions after 30 minutes of inactivity
-- [ ] T030 [P] Add conversation turn limit enforcement - max 10 turns per session (configurable)
-- [ ] T031 [P] Implement input sanitization in ChatRequest validation - prevent injection attacks
-- [ ] T032 Code cleanup: Add type hints to all functions, run linting (ruff)
-- [ ] T033 [P] Create integration tests in `tests/agent/test_agent.py` - test full conversation flows with mock backend
-- [ ] T034 [P] Create unit tests for tools in `tests/agent/test_tools.py` - mock HTTP responses
-- [ ] T035 [P] Create API endpoint tests in `tests/agent/test_api.py` - test ChatRequest/ChatResponse validation
-- [ ] T036 Performance optimization: Add caching for list_available_accesses (5-minute TTL)
-- [ ] T037 Security review: Validate all user inputs, ensure no direct database access, verify authentication flows
-- [ ] T038 Update quickstart.md with final setup instructions and troubleshooting guide
-- [ ] T039 Run quickstart.md validation - follow setup guide from scratch to verify correctness
+- [ ] T031 [P] Implement POST `/agent/chat/stream` endpoint in `src/agent/main.py` - Server-Sent Events streaming response
+- [ ] T032 [P] Add session timeout handling - expire sessions after 30 minutes of inactivity
+- [ ] T033 [P] Add conversation turn limit enforcement - max 10 turns per session (configurable)
+- [ ] T034 [P] Implement input sanitization in ChatRequest validation - prevent injection attacks
+- [ ] T035 Code cleanup: Add type hints to all functions, run linting (ruff)
+- [ ] T036 [P] Create integration tests in `tests/agent/test_agent.py` - test full conversation flows with mock backend
+- [ ] T037 [P] Create unit tests for tools in `tests/agent/test_tools.py` - mock HTTP responses
+- [ ] T038 [P] Create API endpoint tests in `tests/agent/test_api.py` - test ChatRequest/ChatResponse validation
+- [ ] T039 Performance optimization: Add caching for list_available_accesses (5-minute TTL)
+- [ ] T040 Security review: Validate all user inputs, ensure no direct database access, verify authentication flows
+- [ ] T041 Update quickstart.md with final setup instructions and troubleshooting guide
+- [ ] T042 Run quickstart.md validation - follow setup guide from scratch to verify correctness
 
 ---
 
@@ -135,7 +138,7 @@
 
 ### Within Each User Story
 
-- **US1**: Tools (T012-T014) can be built in parallel, then agent initialization (T015), then endpoint (T016), then enhancements (T017-T019)
+- **US1**: Tools (T013-T015) can be built in parallel, then agent initialization (T016), then endpoint (T017), then enhancements (T018-T022)
 - **US2**: All tasks sequential - system prompt first, then parsing, then formatting, then guard logic
 - **US3**: All tasks sequential - reload mechanism first, then flexible parsing, then deprecation logic, then testing
 
@@ -143,8 +146,8 @@
 
 - All Setup tasks marked [P] can run in parallel (T003, T004)
 - Foundational tasks T006 and T007 can run in parallel (different files)
-- US1 tools T012, T013, T014 can be built in parallel (different functions)
-- Polish phase tasks T028-T031, T033-T035 can run in parallel (different files)
+- US1 tools T013, T014, T015 can be built in parallel (different functions)
+- Polish phase tasks T031-T034, T036-T038 can run in parallel (different files)
 - Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)
 
 ---
@@ -205,4 +208,5 @@ With multiple developers:
 - Stop at any checkpoint to validate story independently
 - **MVP Target**: Phase 1 + Phase 2 + Phase 3 (User Story 1) = ~4-6 hours of development
 - **Full Feature**: All phases = ~12-16 hours of development
+- **Total Tasks**: 42 (4 Setup + 8 Foundational + 10 US1 + 4 US2 + 4 US3 + 12 Polish)
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
