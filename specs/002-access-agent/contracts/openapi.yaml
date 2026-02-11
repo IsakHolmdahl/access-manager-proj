@@ -1,0 +1,347 @@
+openapi: 3.1.0
+info:
+  title: Access Management Agent API
+  version: 1.0.0
+  description: |
+    Conversational AI agent for requesting and discovering accesses through natural language.
+    
+    The agent helps users:
+    - Request accesses using natural language (without knowing exact access names)
+    - Discover what accesses are available for their team/role
+    - Get immediate access grants with confirmation
+    
+    Built with AWS Strands SDK and integrates with the Access Management API.
+
+servers:
+  - url: http://localhost:8001
+    description: Development server
+  - url: http://localhost:8001
+    description: Production server (TBD)
+
+tags:
+  - name: Agent
+    description: Conversational agent endpoints
+  - name: Health
+    description: Service health monitoring
+
+paths:
+  /agent/chat:
+    post:
+      tags:
+        - Agent
+      summary: Chat with agent (non-streaming)
+      description: |
+        Send a message to the agent and receive a complete response.
+        
+        The agent will:
+        1. Understand the user's access needs from natural language
+        2. Query available accesses from the backend API
+        3. Ask clarifying questions if needed
+        4. Confirm before granting access
+        5. Grant access immediately once confirmed
+        
+        **Authentication**: Requires user_id and username in request body
+        
+        **Conversation Context**: Provide session_id to maintain context across multiple messages
+      operationId: chatNonStreaming
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              simpleRequest:
+                summary: Simple access request
+                value:
+                  message: "I need access to read documents"
+                  user_id: 1
+                  username: "john_doe"
+              clarifyingQuestion:
+                summary: Answer clarifying question
+                value:
+                  message: "The production environment"
+                  session_id: "user-1-sess-abc123"
+                  user_id: 1
+                  username: "john_doe"
+              discovery:
+                summary: Discover available accesses
+                value:
+                  message: "What accesses are available for the engineering team?"
+                  user_id: 1
+                  username: "john_doe"
+      responses:
+        '200':
+          description: Agent response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                accessGranted:
+                  summary: Access granted successfully
+                  value:
+                    response: "I've granted you READ_DOCUMENTS access. You can now view documents in the system."
+                    session_id: "user-1-sess-abc123"
+                    tools_used: ["list_available_accesses", "grant_access_to_user"]
+                    accesses_granted: ["READ_DOCUMENTS"]
+                clarification:
+                  summary: Agent asks for clarification
+                  value:
+                    response: "I found multiple database accesses. Which environment do you need: development, staging, or production?"
+                    session_id: "user-1-sess-abc123"
+                    tools_used: ["list_available_accesses"]
+                    accesses_granted: []
+                discovery:
+                  summary: List of available accesses
+                  value:
+                    response: "For the engineering team, the following accesses are available:\n\n1. READ_DOCUMENTS - View documents\n2. WRITE_DOCUMENTS - Create and edit documents\n3. APPROVE_INVOICES - Approve invoices\n\nWould you like me to grant any of these?"
+                    session_id: "user-1-sess-abc123"
+                    tools_used: ["list_available_accesses"]
+                    accesses_granted: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /agent/chat/stream:
+    post:
+      tags:
+        - Agent
+      summary: Chat with agent (streaming)
+      description: |
+        Send a message to the agent and receive a streaming response using Server-Sent Events (SSE).
+        
+        The response is delivered incrementally as the agent thinks and acts, providing
+        a more interactive experience. Useful for long responses or when you want to
+        show real-time progress.
+        
+        **Event Types**:
+        - `data`: Text chunk from agent response
+        - `tool_use`: Agent is using a tool (e.g., "list_available_accesses")
+        - `tool_result`: Result from tool execution
+        - `done`: Conversation turn completed
+        - `error`: Error occurred during processing
+      operationId: chatStreaming
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE stream of events
+              examples:
+                streamingResponse:
+                  summary: Example streaming response
+                  value: |
+                    event: tool_use
+                    data: {"event_type": "tool_use", "content": "list_available_accesses"}
+                    
+                    event: data
+                    data: {"event_type": "data", "content": "I found "}
+                    
+                    event: data
+                    data: {"event_type": "data", "content": "READ_DOCUMENTS"}
+                    
+                    event: data
+                    data: {"event_type": "data", "content": " access. "}
+                    
+                    event: tool_use
+                    data: {"event_type": "tool_use", "content": "grant_access_to_user"}
+                    
+                    event: data
+                    data: {"event_type": "data", "content": "I've granted it to you!"}
+                    
+                    event: done
+                    data: {"event_type": "done"}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /agent/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the agent service is healthy and responsive
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "Access Management Agent"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  backend_api_status:
+                    type: string
+                    enum: [reachable, unreachable]
+                    description: Status of backend API connection
+                  bedrock_status:
+                    type: string
+                    enum: [configured, not_configured]
+                    description: Status of AWS Bedrock connection
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+        - user_id
+        - username
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: The user's natural language message
+          example: "I need access to the production database"
+        session_id:
+          type: string
+          nullable: true
+          description: Session ID for conversation continuity (optional)
+          example: "user-1-sess-abc123"
+        user_id:
+          type: integer
+          minimum: 1
+          description: ID of the authenticated user
+          example: 1
+        username:
+          type: string
+          pattern: "^[a-zA-Z0-9_-]+$"
+          description: Username for backend API authentication
+          example: "john_doe"
+
+    ChatResponse:
+      type: object
+      required:
+        - response
+      properties:
+        response:
+          type: string
+          description: The agent's natural language response
+          example: "I've granted you READ_DOCUMENTS access."
+        session_id:
+          type: string
+          nullable: true
+          description: Session ID for conversation continuity
+          example: "user-1-sess-abc123"
+        tools_used:
+          type: array
+          items:
+            type: string
+          description: Names of tools the agent called
+          example: ["list_available_accesses", "grant_access_to_user"]
+        accesses_granted:
+          type: array
+          items:
+            type: string
+          description: Names of accesses granted in this turn
+          example: ["READ_DOCUMENTS"]
+
+    StreamEvent:
+      type: object
+      description: A single event in the Server-Sent Events stream
+      required:
+        - event_type
+      properties:
+        event_type:
+          type: string
+          enum: [data, tool_use, tool_result, done, error]
+          description: Type of event
+        content:
+          type: string
+          nullable: true
+          description: Event content/message
+        metadata:
+          type: object
+          nullable: true
+          description: Additional event metadata
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - message
+            - type
+          properties:
+            message:
+              type: string
+              description: Human-readable error message
+            type:
+              type: string
+              description: Error type/code
+            details:
+              type: object
+              nullable: true
+              description: Additional error details
+              additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Bad request (invalid parameters)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "Message cannot be empty"
+              type: "ValidationError"
+              details: null
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "Request validation failed"
+              type: "ValidationError"
+              details:
+                errors:
+                  - field: "message"
+                    message: "Field required"
+                    type: "missing"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              message: "An internal server error occurred"
+              type: "InternalServerError"
+              details:
+                error: "Connection to backend API failed"
