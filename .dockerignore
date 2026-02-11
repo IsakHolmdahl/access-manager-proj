@@ -61,3 +61,16 @@ logs/
 docker-compose.yml
 Dockerfile
 .dockerignore
+
+# Node.js / JavaScript / TypeScript (Frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts

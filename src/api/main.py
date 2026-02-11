@@ -8,6 +8,7 @@ and initializes the database on startup.
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from src.config import get_settings
@@ -137,7 +138,23 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
                 }
             }
         }
-    )
+)
+
+
+# ============================================================================
+# CORS Middleware Configuration
+# ============================================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",      # Local frontend dev
+        "http://frontend:3000",       # Docker frontend container
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ============================================================================
