@@ -121,7 +121,7 @@ export default function UserDashboard() {
           {/* Chat Section - Desktop */}
           <div className="hidden lg:block">
             <div className="sticky top-8">
-              <ChatInterface isPlaceholder={true} />
+              <ChatInterface isPlaceholder={false} />
             </div>
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function UserDashboard() {
                   </Button>
                 </div>
                 <div className="flex-1">
-                  <ChatInterface isPlaceholder={true} />
+                  <ChatInterface isPlaceholder={false} />
                 </div>
               </div>
             </div>
