@@ -7,10 +7,12 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
-import { ChatMessage, WelcomeMessage } from './ChatMessage';
+import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { ChatLoading } from './ChatLoading';
 import { ChatError } from './ChatError';
+import { ClearChatButton } from './ClearChatButton';
+import { ChatEmptyState } from './ChatEmptyState';
 import { cn } from '@/lib/utils';
 
 export function ChatWindow() {
@@ -48,9 +50,15 @@ export function ChatWindow() {
         
         <div className="flex items-center gap-2">
           {sessionId && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 hidden sm:inline">
               Session: {sessionId.slice(0, 8)}...
             </span>
+          )}
+          {messages.length > 0 && (
+            <ClearChatButton
+              onClear={clearChat}
+              variant="icon"
+            />
           )}
         </div>
       </header>
@@ -64,7 +72,7 @@ export function ChatWindow() {
         aria-label="Chat messages"
       >
         {/* Welcome message for empty chat */}
-        {shouldShowWelcome && <WelcomeMessage />}
+        {shouldShowWelcome && <ChatEmptyState />}
 
         {/* Messages */}
         {messages.map((message, index) => (

@@ -8,11 +8,11 @@
 import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChatError } from '@/types/chat';
+import * as chat from '@/types/chat';
 import { cn } from '@/lib/utils';
 
 interface ChatErrorProps {
-  error: ChatError;
+  error: chat.ChatError;
   onRetry?: () => void;
   onDismiss?: () => void;
 }

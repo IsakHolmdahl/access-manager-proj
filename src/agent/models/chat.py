@@ -154,41 +154,41 @@ class ErrorResponse(BaseModel):
 class HealthResponse(BaseModel):
     """
     Represents the health check response.
-    
+
     Attributes:
         status: Service health status
         service: Service name
         version: Service version
         backend_api_status: Status of backend API connection
-        bedrock_status: Status of AWS Bedrock connection
+        azure_openai_status: Status of Azure OpenAI connection
     """
-    
+
     status: str = Field(
         ...,
         description="Service health status",
         examples=["healthy"]
     )
-    
+
     service: str = Field(
         ...,
         description="Service name",
         examples=["Access Management Agent"]
     )
-    
+
     version: str = Field(
         ...,
         description="Service version",
         examples=["1.0.0"]
     )
-    
+
     backend_api_status: str = Field(
         ...,
         description="Status of backend API connection",
         examples=["reachable"]
     )
-    
-    bedrock_status: str = Field(
+
+    azure_openai_status: str = Field(
         ...,
-        description="Status of AWS Bedrock connection",
+        description="Status of Azure OpenAI connection",
         examples=["configured"]
     )

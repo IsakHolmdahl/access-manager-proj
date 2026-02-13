@@ -17,7 +17,7 @@ from .models.chat import (
     HealthResponse,
     ErrorResponse
 )
-from .agent import create_bedrock_client
+from .agent import create_azure_openai_client
 from .tools.http_client import BackendAPIClient, BackendAPIError
 
 # Configure logging
@@ -25,44 +25,49 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global variables for agent and client
-bedrock_client = None
+azure_client = None
 backend_client = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan (startup and shutdown)."""
-    global bedrock_client, backend_client
-    
+    global azure_client, backend_client
+
     # Startup
     logger.info("Starting Access Management Agent...")
-    
+
     # Load configuration
     config = get_config()
     logger.info(f"Loaded configuration: backend_api_url={config.backend_api_url}")
-    
-    # Initialize Bedrock client
-    try:
-        bedrock_client = create_bedrock_client(
-            region=config.bedrock_region,
-            model_id=config.bedrock_model_id
-        )
-        if bedrock_client.check_connection():
-            logger.info("Bedrock client connected successfully")
-        else:
-            logger.warning("Bedrock client connection check failed - will retry on first use")
-    except Exception as e:
-        logger.warning(f"Failed to initialize Bedrock client: {e}")
-    
+
+    # Initialize Azure OpenAI client
+    if config.is_azure_configured:
+        try:
+            azure_client = create_azure_openai_client(
+                endpoint=config.azure_openai_endpoint,
+                api_key=config.azure_openai_api_key,
+                deployment=config.azure_openai_deployment,
+                api_version=config.azure_openai_api_version
+            )
+            if azure_client.check_connection():
+                logger.info("Azure OpenAI client connected successfully")
+            else:
+                logger.warning("Azure OpenAI client connection check failed - will retry on first use")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Azure OpenAI client: {e}")
+    else:
+        logger.warning("Azure OpenAI not configured - agent will run in placeholder mode")
+
     # Initialize backend API client
     backend_client = BackendAPIClient(
         base_url=config.backend_api_url,
         admin_key=config.backend_admin_key
     )
     logger.info(f"Backend API client initialized: {config.backend_api_url}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Access Management Agent...")
     if backend_client:
@@ -91,12 +96,12 @@ app.add_middleware(
 async def health_check():
     """
     Check if the agent service is healthy and responsive.
-    
+
     Returns:
         HealthResponse with service status
     """
     config = get_config()
-    
+
     # Check backend API connection
     backend_status = "reachable"
     try:
@@ -104,21 +109,26 @@ async def health_check():
             await backend_client.get("/admin/accesses?limit=1")
     except Exception:
         backend_status = "unreachable"
-    
-    # Check Bedrock connection
-    bedrock_status = "not_configured"
-    if bedrock_client:
-        if bedrock_client.check_connection():
-            bedrock_status = "configured"
+
+    # Check Azure OpenAI connection
+    azure_status = "not_configured"
+    if config.is_azure_configured:
+        if azure_client:
+            if azure_client.check_connection():
+                azure_status = "configured"
+            else:
+                azure_status = "connection_failed"
         else:
-            bedrock_status = "not_configured"
-    
+            azure_status = "not_initialized"
+    else:
+        azure_status = "not_configured"
+
     return HealthResponse(
         status="healthy",
         service="Access Management Agent",
         version="1.0.0",
         backend_api_status=backend_status,
-        bedrock_status=bedrock_status
+        azure_openai_status=azure_status
     )
 
 
@@ -126,19 +136,19 @@ async def health_check():
 async def chat_endpoint(request: ChatRequest):
     """
     Chat with the agent (non-streaming).
-    
+
     Send a message to the agent and receive a complete response.
-    
+
     Args:
         request: ChatRequest with message, session_id, user_id, username
-        
+
     Returns:
         ChatResponse with agent's response
     """
     # Placeholder response until agent is fully implemented
     logger.info(f"Chat request from user {request.user_id} ({request.username})")
     logger.info(f"Message: {request.message[:100]}...")
-    
+
     # TODO: Implement actual agent logic
     # For now, return a placeholder response
     return ChatResponse(
@@ -154,7 +164,7 @@ async def chat_endpoint(request: ChatRequest):
 async def backend_api_error_handler(request: Request, exc: BackendAPIError):
     """Handle backend API errors."""
     logger.error(f"Backend API error: {exc.message}")
-    
+
     return JSONResponse(
         status_code=exc.status_code or 503,
         content={
@@ -171,7 +181,7 @@ async def backend_api_error_handler(request: Request, exc: BackendAPIError):
 async def general_error_handler(request: Request, exc: Exception):
     """Handle unexpected errors."""
     logger.error(f"Unexpected error: {exc}", exc_info=True)
-    
+
     return JSONResponse(
         status_code=500,
         content={
@@ -187,7 +197,7 @@ async def general_error_handler(request: Request, exc: Exception):
 def create_app() -> FastAPI:
     """
     Create and configure the FastAPI application.
-    
+
     Returns:
         Configured FastAPI application instance
     """

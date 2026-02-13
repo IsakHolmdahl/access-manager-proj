@@ -1,88 +1,100 @@
 """
-AWS Bedrock client initialization and Strands Agent setup for the Access Management Agent.
+Azure OpenAI client initialization and Strands Agent setup for the Access Management Agent.
 """
 
 import logging
 from typing import Optional
 from contextlib import asynccontextmanager
 
-import boto3
-from botocore.config import Config
+from openai import AzureOpenAI
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
 
-class BedrockClient:
-    """Client for AWS Bedrock service."""
-    
+class AzureOpenAIClient:
+    """Client for Azure OpenAI service."""
+
     def __init__(
         self,
-        region: str = "us-west-2",
-        model_id: str = "anthropic.claude-sonnet-4-20250514-v1:0"
+        endpoint: str,
+        api_key: str,
+        deployment: str = "gpt-4o",
+        api_version: str = "2024-02-15-preview"
     ):
         """
-        Initialize the Bedrock client.
-        
+        Initialize the Azure OpenAI client.
+
         Args:
-            region: AWS region for Bedrock service
-            model_id: Model ID to use for inference
+            endpoint: Azure OpenAI endpoint URL
+            api_key: Azure OpenAI API key
+            deployment: Model deployment name
+            api_version: API version to use
         """
-        self.region = region
-        self.model_id = model_id
-        
-        # Configure the boto3 client with retry logic
-        config = Config(
-            region_name=region,
-            retries={"max_attempts": 3, "mode": "adaptive"}
+        self.endpoint = endpoint
+        self.deployment = deployment
+        self.api_version = api_version
+
+        self.client = AzureOpenAI(
+            azure_endpoint=endpoint,
+            api_key=api_key,
+            api_version=api_version
         )
-        
-        self.client = boto3.client("bedrock-runtime", config=config)
-    
+
     def check_connection(self) -> bool:
         """
-        Check if the Bedrock client can connect to the service.
-        
+        Check if the Azure OpenAI client can connect to the service.
+
         Returns:
             True if connection successful, False otherwise
         """
         try:
             # Try to invoke the model with a simple test prompt
-            response = self.client.invoke_model(
-                modelId=self.model_id,
-                contentType="application/json",
-                accept="application/json",
-                body='{"prompt": "Hello", "maxTokens": 10}'
+            response = self.client.chat.completions.create(
+                model=self.deployment,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "Hello"}
+                ],
+                max_tokens=10
             )
-            response.close()
-            return True
+            return bool(response)
         except ClientError as e:
-            logger.error(f"Bedrock connection check failed: {e}")
+            logger.error(f"Azure OpenAI connection check failed: {e}")
             return False
         except Exception as e:
-            logger.error(f"Bedrock connection check error: {e}")
+            logger.error(f"Azure OpenAI connection check error: {e}")
             return False
-    
-    def get_model_id(self) -> str:
-        """Get the configured model ID."""
-        return self.model_id
+
+    def get_deployment_name(self) -> str:
+        """Get the configured deployment name."""
+        return self.deployment
 
 
-def create_bedrock_client(
-    region: str = "us-west-2",
-    model_id: str = "anthropic.claude-sonnet-4-20250514-v1:0"
-) -> BedrockClient:
+def create_azure_openai_client(
+    endpoint: str,
+    api_key: str,
+    deployment: str = "gpt-4o",
+    api_version: str = "2024-02-15-preview"
+) -> AzureOpenAIClient:
     """
-    Create a Bedrock client instance.
-    
+    Create an Azure OpenAI client instance.
+
     Args:
-        region: AWS region for Bedrock service
-        model_id: Model ID to use for inference
-        
+        endpoint: Azure OpenAI endpoint URL
+        api_key: Azure OpenAI API key
+        deployment: Model deployment name
+        api_version: API version to use
+
     Returns:
-        BedrockClient instance
+        AzureOpenAIClient instance
     """
-    return BedrockClient(region=region, model_id=model_id)
+    return AzureOpenAIClient(
+        endpoint=endpoint,
+        api_key=api_key,
+        deployment=deployment,
+        api_version=api_version
+    )
 
 
 # Strands Agent initialization
@@ -91,12 +103,12 @@ def create_bedrock_client(
 
 try:
     from strands import Agent
-    from strands.models import BedrockModel
+    from strands.models.openai import OpenAIModel
     from .tools.access_tools import list_available_accesses, grant_access_to_user
     from .tools.user_tools import get_user_accesses
     from .prompts.system_prompt import build_system_prompt
     from .config import get_config
-    
+
     STRANDS_AVAILABLE = True
 except ImportError:
     STRANDS_AVAILABLE = False
@@ -105,30 +117,46 @@ except ImportError:
 
 def create_agent(
     system_prompt: str,
-    model_id: str = "anthropic.claude-sonnet-4-20250514-v1:0"
+    deployment: str = "gpt-4o",
+    endpoint: str = "",
+    api_key: str = ""
 ):
     """
-    Create and configure the Strands Agent.
-    
+    Create and configure the Strands Agent with Azure OpenAI.
+
     Args:
         system_prompt: Complete system prompt for the agent
-        model_id: Bedrock model ID to use
-        
+        deployment: Azure OpenAI deployment name
+        endpoint: Azure OpenAI endpoint URL
+        api_key: Azure OpenAI API key
+
     Returns:
         Configured Agent instance or None if strands is not available
     """
     if not STRANDS_AVAILABLE:
         logger.error("Cannot create agent: Strands SDK not available")
         return None
-    
+
     try:
-        # Create the Bedrock model
-        model = BedrockModel(
-            model_id=model_id,
-            temperature=0.1,  # Low temperature for consistent, focused responses
-            max_tokens=2000
+        # Create the Azure OpenAI model configuration
+        client_args = {
+            "api_key": api_key,
+        }
+
+        # Add base_url for Azure
+        if endpoint:
+            client_args["base_url"] = f"{endpoint.rstrip('/')}/openai/"
+
+        # Create the OpenAI model (compatible with Azure)
+        model = OpenAIModel(
+            client_args=client_args,
+            model_id=deployment,
+            params={
+                "temperature": 0.1,  # Low temperature for consistent, focused responses
+                "max_tokens": 2000
+            }
         )
-        
+
         # Create the agent with tools
         agent = Agent(
             model=model,
@@ -139,10 +167,10 @@ def create_agent(
                 grant_access_to_user
             ]
         )
-        
-        logger.info("Strands Agent created successfully")
+
+        logger.info("Strands Agent created successfully with Azure OpenAI")
         return agent
-        
+
     except Exception as e:
         logger.error(f"Failed to create Strands Agent: {e}", exc_info=True)
         return None
@@ -151,51 +179,53 @@ def create_agent(
 async def initialize_agent() -> Optional:
     """
     Initialize the Strands Agent with proper configuration.
-    
+
     This function:
     1. Loads the configuration
     2. Builds the system prompt from documentation
     3. Creates the agent with all tools
-    
+
     Returns:
         Initialized Agent instance or None if initialization fails
     """
     if not STRANDS_AVAILABLE:
         logger.error("Strands SDK not available")
         return None
-    
+
     try:
         # Load configuration
         config = get_config()
-        
+
         # Build system prompt
         system_prompt, error = build_system_prompt(config.documentation_path)
         if error:
             logger.error(f"Failed to build system prompt: {error}")
             # Use a basic system prompt as fallback
             system_prompt = """You are an Access Assistant that helps users request and discover access permissions.
-            
+
             You have access to tools that can:
             - List available accesses
             - Check what accesses a user currently has
             - Grant accesses to users
-            
+
             Always confirm before granting access and be helpful in explaining what each access enables.
             """
-        
+
         # Create the agent
         agent = create_agent(
             system_prompt=system_prompt,
-            model_id=config.bedrock_model_id
+            deployment=config.azure_openai_deployment,
+            endpoint=config.azure_openai_endpoint,
+            api_key=config.azure_openai_api_key
         )
-        
+
         if agent:
-            logger.info("Agent initialized successfully")
+            logger.info("Agent initialized successfully with Azure OpenAI")
         else:
             logger.error("Failed to initialize agent")
-        
+
         return agent
-        
+
     except Exception as e:
         logger.error(f"Error initializing agent: {e}", exc_info=True)
         return None
