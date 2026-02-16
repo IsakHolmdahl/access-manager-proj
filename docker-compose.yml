@@ -1,4 +1,3 @@
-
 services:
   backend:
     build:
@@ -11,10 +10,10 @@ services:
       - APP_ENVIRONMENT=${APP_ENVIRONMENT:-development}
       - API_TITLE=${API_TITLE:-Access Management API}
       - API_VERSION=${API_VERSION:-1.0.0}
-      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY:-your-secret-admin-key-change-this-in-production}
-      - DUCKDB_PATH=${DUCKDB_PATH:-./data/database/access_management.duckdb}
-      - PARQUET_PATH=${PARQUET_PATH:-./data/parquet}
-      - TEMP_DIRECTORY=${TEMP_DIRECTORY:-./data/temp}
+      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY}
+      - DUCKDB_PATH=${DUCKDB_PATH}
+      - PARQUET_PATH=${PARQUET_PATH}
+      - TEMP_DIRECTORY=${TEMP_DIRECTORY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
       - ./data:/app/data
@@ -95,23 +94,6 @@ services:
       start_period: 10s
     networks:
       - access-mgmt-network
-
-  caddy:
-    image: caddy:latest
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./conf:/etc/caddy
-      - ./site:/srv
-      - caddy_data:/data
-      - caddy_config:/config
-
-volumes:
-  caddy_data:
-  caddy_config:
 
 networks:
   access-mgmt-network:

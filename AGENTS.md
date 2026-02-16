@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-02-06
 
 ## Active Technologies
+- Python 3.11+ + FastAPI (web framework), DuckDB (embedded database), Strands Agents (agent framework) (004-user-chat-agent)
+- DuckDB (embedded database, existing) (004-user-chat-agent)
 
 - Python 3.11+ + FastAPI (web framework), DuckDB (embedded database), Pydantic (data validation), uvicorn (ASGI server) (001-access-management-api)
 
@@ -27,11 +29,11 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.11+: Follow standard conventions
 
 ## Recent Changes
+- 004-user-chat-agent: Added Python 3.11+ + FastAPI (web framework), DuckDB (embedded database), Strands Agents (agent framework)
 - 002-web-admin-frontend: Added TypeScript 5.3+, Next.js 14+ (App Router)
 
 - 002-access-agent: Added Python 3.11+ + AWS Strands SDK (strands-agents), FastAPI, httpx (async HTTP client), boto3 (AWS SDK), uvicorn (ASGI server)
 
-- 001-access-management-api: Added Python 3.11+ + FastAPI (web framework), DuckDB (embedded database), Pydantic (data validation), uvicorn (ASGI server)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
